@@ -29,6 +29,7 @@
                 torch
                 torchvision            
               ]))
+              pkgs.cargo
             ];
           };
       });
