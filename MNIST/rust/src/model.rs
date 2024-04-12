@@ -53,6 +53,32 @@ impl<const N: usize> Model<N, N> for ReLUModel<N> {
 }
 
 
+pub struct SoftMaxModel<const N: usize> {}
+
+impl<const N: usize> Model<N, N> for SoftMaxModel<N> {
+    fn forward(&self, input: &SVector<f64, N>) -> SVector<f64, N> {
+        let exs = input.map(|x| x.exp());
+        let s = exs.sum();
+
+        exs.map(|x| x / s)
+    }
+
+    fn graident(&self, input: &SVector<f64, N>) -> SMatrix<f64, N, N> {
+        let exs = input.map(|x| x.exp());
+        let s = exs.sum();
+
+        SMatrix::from_diagonal(
+            &input.map(|x| {
+                let ex = x.exp();
+                ex * (s - ex) / (s * s)
+            })
+        )
+    }
+
+    fn adjust(&mut self, _mu: f64, _gra: &Matrix<1, N>, _input: &Vector<N>) {}
+}
+
+
 pub struct ConcatModel<
     const N: usize, const M: usize, const O: usize,
 > {
