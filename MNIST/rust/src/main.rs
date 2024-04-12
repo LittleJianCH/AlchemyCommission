@@ -1,5 +1,8 @@
+#![feature(associated_type_defaults)]
+
 mod types;
 mod parser;
+mod model;
 
 use constcat::concat;
 
