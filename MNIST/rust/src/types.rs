@@ -1,6 +1,6 @@
 use nalgebra::SVector;
 
-pub const IMAGE_SIZE: usize = 28 * 28;
+pub static IMAGE_SIZE: usize = 28 * 28;
 
 pub type Image = SVector<f64, IMAGE_SIZE>;
 
