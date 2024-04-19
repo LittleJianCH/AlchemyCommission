@@ -4,3 +4,4 @@ datasets/
 *.pth
 
 */*/target
+*.json

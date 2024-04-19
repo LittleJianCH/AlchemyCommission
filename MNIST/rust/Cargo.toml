@@ -3,7 +3,17 @@ name = "mnist-mlp"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "train"
+path = "src/train.rs"
+
+[[bin]]
+name = "test"
+path = "src/test.rs"
+
 [dependencies]
-nalgebra = "0.32.5"
+nalgebra = { version = "0.32.5", features = ["serde-serialize"] }
 constcat = "0.5.0"
 rand = "0.8.5"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

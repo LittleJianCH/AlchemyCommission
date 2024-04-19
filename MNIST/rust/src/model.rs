@@ -1,12 +1,12 @@
 use std::cell::Cell;
+use serde::{Serialize, Deserialize};
 
 type Vector<const N: usize> = nalgebra::SVector<f64, N>;
 type Matrix<const N: usize, const M: usize> = nalgebra::SMatrix<f64, N, M>;
 
 pub trait Model<
     const N: usize, const M: usize
-> where
-{
+>: Serialize {
     fn forward(&self, input: &Vector<N>) -> Vector<M>;
     fn forward_cached(&self) -> Vector<M>;
     fn graident(&self, input: &Vector<N>) -> Matrix<M, N>;
@@ -14,6 +14,7 @@ pub trait Model<
 }
 
 
+#[derive(Serialize, Deserialize)]
 pub struct LinearModel<
     const N: usize, const M: usize
 > {
@@ -53,6 +54,7 @@ impl<const N: usize, const M: usize> Model<N, M> for LinearModel<N, M> {
 }
 
 
+#[derive(Serialize, Deserialize)]
 pub struct ReLUModel<const N: usize> {
     cache: Cell<Vector<N>>
 }
@@ -91,6 +93,7 @@ impl<const N: usize> Model<N, N> for ReLUModel<N> {
 }
 
 
+#[derive(Serialize, Deserialize)]
 pub struct SigmoidModel<const N: usize> {
     cache: Cell<Vector<N>>
 }
@@ -129,6 +132,7 @@ impl<const N: usize> Model<N, N> for SigmoidModel<N> {
 }
 
 
+#[derive(Serialize, Deserialize)]
 pub struct SoftMaxModel<const N: usize> {
     cache: Cell<Vector<N>>
 }
@@ -169,24 +173,31 @@ impl<const N: usize> Model<N, N> for SoftMaxModel<N> {
     fn adjust(&mut self, _mu: f64, _gra: &Matrix<1, N>, _input: &Vector<N>) {}
 }
 
-
+#[derive(Serialize, Deserialize)]
 pub struct ConcatModel<
     const N: usize, const M: usize, const O: usize,
-> {
-    m1: Box<dyn Model<N, M>>,
-    m2: Box<dyn Model<M, O>>,
+    M1, M2
+> where
+    M1: Model<N, M>, M2: Model<M, O>
+{
+    m1: M1,
+    m2: M2,
     cache: Cell<Vector<O>>
 }
 
-impl<const N: usize, const M: usize, const O: usize> ConcatModel<N, M, O> {
-    pub fn new(m1: Box<dyn Model<N, M>>, m2: Box<dyn Model<M, O>>) -> Self {
+impl<
+    const N: usize, const M: usize, const O: usize,
+    M1: Model<N, M>, M2: Model<M, O>,
+> ConcatModel<N, M, O, M1, M2> {
+    pub fn new(m1: M1, m2: M2) -> Self {
         Self { m1, m2, cache: Cell::new(Vector::zeros()) }
     }
 }
 
 impl<
     const N: usize, const M: usize, const O: usize,
-> Model<N, O> for ConcatModel<N, M, O> {
+    M1: Model<N, M>, M2: Model<M, O>,
+> Model<N, O> for ConcatModel<N, M, O, M1, M2> {
     fn forward(&self, input: &Vector<N>) -> Vector<O> {
         self.cache.set(self.m2.forward(&self.m1.forward(input)));
         self.forward_cached()
@@ -211,11 +222,11 @@ impl<
     }
 }
 
-pub struct Loss<const N: usize, const M: usize> {
-    pub m: Box<dyn Model<N, M>>
+pub struct Loss<const N: usize, const M: usize, Md: Model<N, M>> {
+    pub m: Md
 }
 
-impl<const N: usize, const M: usize> Loss<N, M> {
+impl<const N: usize, const M: usize, Md: Model<N, M>> Loss<N, M, Md> {
     pub fn adjust(&mut self, mu: f64, ys: &Vector<M>, xs: &Vector<N>) {
         let predict = self.m.forward_cached();
 
