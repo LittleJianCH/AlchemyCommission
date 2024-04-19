@@ -25,8 +25,8 @@ pub struct LinearModel<
 impl<const N: usize, const M: usize> LinearModel<N, M> {
     pub fn new() -> Self {
         Self {
-            weights: Matrix::zeros(),
-            bias: Vector::zeros(),
+            weights: Matrix::from_fn(|_, _| rand::random::<f64>() / 100.0),
+            bias: Vector::from_fn(|_, _| rand::random::<f64>() / 100.0),
             cache: Cell::new(Vector::zeros())
         }
     }
@@ -67,7 +67,13 @@ impl<const N: usize> ReLUModel<N> {
 
 impl<const N: usize> Model<N, N> for ReLUModel<N> {
     fn forward(&self, input: &Vector<N>) -> Vector<N> {
-        self.cache.set(input.map(|x| x.max(0.0)));
+        self.cache.set(input.map(|x| 
+            if x < 0.0 {
+                x * 0.05
+            } else {
+                x
+            }
+        ));
         self.forward_cached()
     }
 
@@ -77,7 +83,45 @@ impl<const N: usize> Model<N, N> for ReLUModel<N> {
 
     fn graident(&self, input: &Vector<N>) -> Matrix<N, N> {
         Matrix::from_diagonal(
-            &input.map(|x| if x < 0.0 { 0.0 } else { 1.0 })
+            &input.map(|x| if x < 0.0 { 0.05 } else { 1.0 })
+        )
+    }
+
+    fn adjust(&mut self, _mu: f64, _gra: &Matrix<1, N>, _input: &Vector<N>) {}
+}
+
+
+pub struct SigmoidModel<const N: usize> {
+    cache: Cell<Vector<N>>
+}
+
+impl<const N: usize> SigmoidModel<N> {
+    pub fn new() -> Self {
+        Self {
+            cache: Cell::new(Vector::zeros())
+        }
+    }
+
+    fn f(x: f64) -> f64 {
+        1.0 / (1.0 + (-x).exp())
+    }
+}
+
+impl<const N: usize> Model<N, N> for SigmoidModel<N> {
+    fn forward(&self, input: &Vector<N>) -> Vector<N> {
+        self.cache.set(input.map(Self::f));
+        self.forward_cached()
+    }
+
+    fn forward_cached(&self) -> Vector<N> {
+        self.cache.get()
+    }
+
+    fn graident(&self, _input: &Vector<N>) -> Matrix<N, N> {
+        let s = self.forward_cached();
+
+        Matrix::from_diagonal(
+            &s.map(|x| Self::f(x) * (1.0 - Self::f(x)))
         )
     }
 
@@ -173,7 +217,7 @@ pub struct Loss<const N: usize, const M: usize> {
 
 impl<const N: usize, const M: usize> Loss<N, M> {
     pub fn adjust(&mut self, mu: f64, ys: &Vector<M>, xs: &Vector<N>) {
-        let predict = self.m.forward(xs);
+        let predict = self.m.forward_cached();
 
         self.m.adjust(mu, &(2.0 * (predict - ys)).transpose(), xs);
     }
