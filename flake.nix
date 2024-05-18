@@ -30,6 +30,8 @@
                 torchvision
                 opencv4
                 wget
+                pillow
+                tkinter
               ]))
               pkgs.cargo
             ];
