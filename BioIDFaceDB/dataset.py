@@ -20,8 +20,9 @@ class FaceDB_Dataset(torch.utils.data.Dataset):
       f.readline() # skip the first line
       line = f.readline()
       labels = list(map(int, line.split()))
-    
-    return torch.from_numpy(np.array(img)), np.array(labels)
+
+    img_tensor = torch.from_numpy(np.array(img)).type(torch.FloatTensor).unsqueeze(0)
+    return img_tensor, np.array(labels)
 
   def __len__(self):
     return 1520 # hardcoded for now
