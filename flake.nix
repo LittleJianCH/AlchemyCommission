@@ -27,7 +27,9 @@
             packages = [
               (python.withPackages (ps: with ps; [
                 torch
-                torchvision            
+                torchvision
+                opencv4
+                wget
               ]))
               pkgs.cargo
             ];
