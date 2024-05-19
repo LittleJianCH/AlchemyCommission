@@ -5,3 +5,6 @@ datasets/
 
 */*/target
 *.json
+
+BioIDFaceDB/__pycache__
+BioIDFaceDB/*.txt

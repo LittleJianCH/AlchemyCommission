@@ -5,11 +5,13 @@ from PIL import Image
 import numpy as np
 
 class FaceDB_Dataset(torch.utils.data.Dataset):
-  def __init__(self, root, transform=None):
+  def __init__(self, root, ids, transform=None):
     self.root = root
+    self.ids = ids
     self.transform = transform
 
   def __getitem__(self, idx):
+    idx = self.ids[idx]
     name = f"BioID_{idx:04d}"
 
     img = Image.open(f"{self.root}/{name}.pgm")
@@ -22,7 +24,10 @@ class FaceDB_Dataset(torch.utils.data.Dataset):
       labels = list(map(int, line.split()))
 
     img_tensor = torch.from_numpy(np.array(img)).type(torch.FloatTensor).unsqueeze(0)
-    return img_tensor, np.array(labels)
+    label_tensor = torch.from_numpy(np.array(labels)).type(torch.FloatTensor)
+
+    # print(img_tensor, label_tensor)
+    return img_tensor, label_tensor
 
   def __len__(self):
-    return 1520 # hardcoded for now
+    return len(self.ids)
