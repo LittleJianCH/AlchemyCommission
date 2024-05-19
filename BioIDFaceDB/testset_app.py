@@ -4,6 +4,8 @@ import cv2
 import torch
 import numpy as np
 
+from app_utils import mark_eye
+
 dir_path = "../datasets/BioID-FaceDatabase"
 model = torch.load("model.pth")
 
@@ -12,10 +14,6 @@ def read_eye(path):
     f.readline()
     line = f.readline()
     return list(map(int, line.split()))
-
-def mark_eye(image, eye, color):
-  cv2.circle(image, (eye[0], eye[1]), 7, color, 1)
-  cv2.circle(image, (eye[2], eye[3]), 7, color, 1)
 
 def get_photo(id):
   file_name = f"BioID_{id:04d}"
