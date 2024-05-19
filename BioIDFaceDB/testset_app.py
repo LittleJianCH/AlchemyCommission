@@ -70,7 +70,7 @@ class DisplayPicApp:
   
 
 if __name__ == "__main__":
-  with open("train.txt", "r") as f:
+  with open("test.txt", "r") as f:
     ids = eval(f.readline())
   
   root = tk.Tk()
